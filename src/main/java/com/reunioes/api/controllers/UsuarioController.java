@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
  
 import com.reunioes.api.entities.Usuario;
+import com.reunioes.api.response.Response;
 import com.reunioes.api.services.UsuarioService;
 import com.reunioes.api.utils.ConsistenciaException;
  
@@ -35,22 +36,28 @@ public class UsuarioController {
    	 * @return Dados do usuário
    	 */
    	@GetMapping(value = "/{id}")
-   	public ResponseEntity<Usuario> buscarPorId(@PathVariable("id") int id) {
+   	public ResponseEntity<Response<Usuario>> buscarPorId(@PathVariable("id") int id) {
  
+   		Response<Usuario> response = new Response<Usuario>();
+   		
          	try {
  
                 	log.info("Controller: buscando usuário com id: {}", id);
                 	
                 	Optional<Usuario> usuario = usuarioService.buscarPorId(id);
+                	
+                	response.setDados(usuario.get());
  
-                	return ResponseEntity.ok(usuario.get());
+                	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
                 	log.info("Controller: Inconsistência de dados: {}", e.getMessage());
-                	return ResponseEntity.badRequest().body(new Usuario());
+                	response.adicionarErro(e.getMensagem());
+                	return ResponseEntity.badRequest().body(response);
          	} catch (Exception e) {
                 	log.error("Controller: Ocorreu um erro na aplicação: {}", e.getMessage());
-                	return ResponseEntity.status(500).body(new Usuario());
+                	response.adicionarErro("Ocorreu um erro na aplicação: {}", e.getMessage());
+                	return ResponseEntity.status(500).body(response);
          	}
  
    	}
@@ -62,20 +69,26 @@ public class UsuarioController {
    	 * @return Dados do usuário persistido
    	 */
    	@PostMapping
-   	public ResponseEntity<Usuario> salvar(@RequestBody Usuario usuario) {
+   	public ResponseEntity<Response<Usuario>> salvar(@RequestBody Usuario usuario) {
  
+   		Response<Usuario> response = new Response<Usuario>();
+   		
          	try {
  
                 	log.info("Controller: salvando o usuário: {}", usuario.toString());
- 
-                	return ResponseEntity.ok(this.usuarioService.salvar(usuario));
+                	
+                	response.setDados(this.usuarioService.salvar(usuario));
+                	
+                	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
                 	log.info("Controller: Inconsistência de dados: {}", e.getMessage());
-                	return ResponseEntity.badRequest().body(new Usuario());
+                	response.adicionarErro("Ocorreu um erro na aplicação: {}", e.getMessage());
+                	return ResponseEntity.badRequest().body(response);
          	} catch (Exception e) {
                 	log.error("Controller: Ocorreu um erro na aplicação: {}", e.getMessage());
-                	return ResponseEntity.status(500).body(new Usuario());
+                	response.adicionarErro("Ocorreu um erro na aplicação: {}", e.getMessage());
+                	return ResponseEntity.status(500).body(response);
          	}
  
    	}

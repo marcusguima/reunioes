@@ -1,6 +1,5 @@
 package com.reunioes.api.controllers;
  
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
  
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
  
 import com.reunioes.api.entities.Presenca;
+import com.reunioes.api.response.Response;
 import com.reunioes.api.services.PresencaService;
 import com.reunioes.api.utils.ConsistenciaException;
  
@@ -38,22 +38,28 @@ public class PresencaController {
    	 * @return Lista de presenças que o usuário possui
    	 */
    	@GetMapping(value = "/usuario/{usuarioId}")
-   	public ResponseEntity<List<Presenca>> buscarPorUsuarioId(@PathVariable("usuarioId") int usuarioId) {
+   	public ResponseEntity<Response<List<Presenca>>> buscarPorUsuarioId(@PathVariable("usuarioId") int usuarioId) {
  
+   		Response<List<Presenca>> response = new Response<List<Presenca>>();
+   		
          	try {
  
                 	log.info("Controller: buscando presenças do usuário de ID: {}", usuarioId);
  
                 	Optional<List<Presenca>> listaPresencas = presencaService.buscarPorUsuarioId(usuarioId);
+                	
+                	response.setDados(listaPresencas.get());
  
-                	return ResponseEntity.ok(listaPresencas.get());
+                	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
                 	log.info("Controller: Inconsistência de dados: {}", e.getMessage());
-                	return ResponseEntity.badRequest().body(new ArrayList<Presenca>());
+                	response.adicionarErro(e.getMensagem());
+                	return ResponseEntity.badRequest().body(response);
          	} catch (Exception e) {
                 	log.error("Controller: Ocorreu um erro na aplicação: {}", e.getMessage());
-                	return ResponseEntity.status(500).body(new ArrayList<Presenca>());
+                	response.adicionarErro("Ocorreu um erro na aplicação: {}", e.getMessage());
+                	return ResponseEntity.status(500).body(response);
          	}
  
    	}
@@ -65,22 +71,28 @@ public class PresencaController {
    	 * @return Lista de presenças que a reunião possui
    	 */
    	@GetMapping(value = "/presenca/{presencaId}")
-   	public ResponseEntity<List<Presenca>> buscarPorReuniaoId(@PathVariable("reuniaoId") int reuniaoId) {
+   	public ResponseEntity<Response<List<Presenca>>> buscarPorReuniaoId(@PathVariable("reuniaoId") int reuniaoId) {
  
+   		Response<List<Presenca>> response = new Response<List<Presenca>>();
+   		
          	try {
  
                 	log.info("Controller: buscando presenças da reunião de ID: {}", reuniaoId);
  
                 	Optional<List<Presenca>> listaPresencas = presencaService.buscarPorReuniaoId(reuniaoId);
+                	
+                	response.setDados(listaPresencas.get());
  
-                	return ResponseEntity.ok(listaPresencas.get());
+                	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
                 	log.info("Controller: Inconsistência de dados: {}", e.getMessage());
-                	return ResponseEntity.badRequest().body(new ArrayList<Presenca>());
+                	response.adicionarErro(e.getMensagem());
+                	return ResponseEntity.badRequest().body(response);
          	} catch (Exception e) {
                 	log.error("Controller: Ocorreu um erro na aplicação: {}", e.getMessage());
-                	return ResponseEntity.status(500).body(new ArrayList<Presenca>());
+                	response.adicionarErro("Ocorreu um erro na aplicação: {}", e.getMessage());
+                	return ResponseEntity.status(500).body(response);
          	}
  
    	}
@@ -92,20 +104,26 @@ public class PresencaController {
    	 * @return Dados da presença persistido
    	 */
    	@PostMapping
-   	public ResponseEntity<Presenca> salvar(@RequestBody Presenca presenca) {
+   	public ResponseEntity<Response<Presenca>> salvar(@RequestBody Presenca presenca) {
  
+   		Response<Presenca> response = new Response<Presenca>();
+   		
          	try {
  
                 	log.info("Controller: salvando a presença: {}", presenca.toString());
+                	
+                	response.setDados(this.presencaService.salvar(presenca));
          	
-                	return ResponseEntity.ok(this.presencaService.salvar(presenca));
+                	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
                 	log.info("Controller: Inconsistência de dados: {}", e.getMessage());
-                	return ResponseEntity.badRequest().body(new Presenca());
+                	response.adicionarErro(e.getMensagem());
+                	return ResponseEntity.badRequest().body(response);
          	} catch (Exception e) {
                 	log.error("Controller: Ocorreu um erro na aplicação: {}", e.getMessage());
-                	return ResponseEntity.status(500).body(new Presenca());
+                	response.adicionarErro("Ocorreu um erro na aplicação: {}", e.getMessage());
+                	return ResponseEntity.status(500).body(response);
          	}
  
    	}
@@ -116,22 +134,28 @@ public class PresencaController {
    	 * @return Sucesso/erro
    	 */
    	@DeleteMapping(value = "excluir/{id}")
-   	public ResponseEntity<String> excluirPorId(@PathVariable("id") int id){
+   	public ResponseEntity<Response<String>> excluirPorId(@PathVariable("id") int id){
          	
+   		Response<String> response = new Response<String>();
+   		
          	try {
  
                 	log.info("Controller: excluíndo presença de ID: {}", id);
+                	
+                	response.setDados("Presença de id: " + id + " excluído com sucesso");
  
                 	presencaService.excluirPorId(id);
  
-                	return ResponseEntity.ok("Presença de id: " + id + " excluído com sucesso");
+                	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
                 	log.info("Controller: Inconsistência de dados: {}", e.getMessage());
-                	return ResponseEntity.badRequest().body(e.getMensagem());
+                	response.adicionarErro(e.getMensagem());
+                	return ResponseEntity.badRequest().body(response);
          	} catch (Exception e) {
                 	log.error("Controller: Ocorreu um erro na aplicação: {}", e.getMessage());
-                	return ResponseEntity.status(500).body(e.getMessage());
+                	response.adicionarErro("Ocorreu um erro na aplicação: {}", e.getMessage());
+                	return ResponseEntity.status(500).body(response);
          	}
          	
    	}

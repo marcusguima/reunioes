@@ -1,6 +1,5 @@
 package com.reunioes.api.controllers;
  
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
  
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
  
 import com.reunioes.api.entities.Reuniao;
+import com.reunioes.api.response.Response;
 import com.reunioes.api.services.ReuniaoService;
 import com.reunioes.api.utils.ConsistenciaException;
  
@@ -38,22 +38,28 @@ public class ReuniaoController {
    	 * @return Lista de reuniões que o usuário possui
    	 */
    	@GetMapping(value = "/usuario/{usuarioId}")
-   	public ResponseEntity<List<Reuniao>> buscarPorUsuarioId(@PathVariable("usuarioId") int usuarioId) {
+   	public ResponseEntity<Response<List<Reuniao>>> buscarPorUsuarioId(@PathVariable("usuarioId") int usuarioId) {
  
+   		Response<List<Reuniao>> response = new Response<List<Reuniao>>();
+   		
          	try {
  
                 	log.info("Controller: buscando reuniões do usuário de ID: {}", usuarioId);
  
                 	Optional<List<Reuniao>> listaReunioes = reuniaoService.buscarPorUsuarioId(usuarioId);
+                	
+                	response.setDados(listaReunioes.get());
  
-                	return ResponseEntity.ok(listaReunioes.get());
+                	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
                 	log.info("Controller: Inconsistência de dados: {}", e.getMessage());
-                	return ResponseEntity.badRequest().body(new ArrayList<Reuniao>());
+                	response.adicionarErro(e.getMensagem());
+                	return ResponseEntity.badRequest().body(response);
          	} catch (Exception e) {
                 	log.error("Controller: Ocorreu um erro na aplicação: {}", e.getMessage());
-                	return ResponseEntity.status(500).body(new ArrayList<Reuniao>());
+                	response.adicionarErro("Ocorreu um erro na aplicação: {}", e.getMessage());
+                	return ResponseEntity.status(500).body(response);
          	}
  
    	}
@@ -65,20 +71,26 @@ public class ReuniaoController {
    	 * @return Dados da reunião persistido
    	 */
    	@PostMapping
-   	public ResponseEntity<Reuniao> salvar(@RequestBody Reuniao reuniao) {
+   	public ResponseEntity<Response<Reuniao>> salvar(@RequestBody Reuniao reuniao) {
  
+   		Response<Reuniao> response = new Response<Reuniao>();
+   		
          	try {
  
                 	log.info("Controller: salvando a reunião: {}", reuniao.toString());
+                	
+                	response.setDados(this.reuniaoService.salvar(reuniao));
          	
-                	return ResponseEntity.ok(this.reuniaoService.salvar(reuniao));
+                	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
                 	log.info("Controller: Inconsistência de dados: {}", e.getMessage());
-                	return ResponseEntity.badRequest().body(new Reuniao());
+                	response.adicionarErro(e.getMensagem());
+                	return ResponseEntity.badRequest().body(response);
          	} catch (Exception e) {
                 	log.error("Controller: Ocorreu um erro na aplicação: {}", e.getMessage());
-                	return ResponseEntity.status(500).body(new Reuniao());
+                	response.adicionarErro("Ocorreu um erro na aplicação: {}", e.getMessage());
+                	return ResponseEntity.status(500).body(response);
          	}
  
    	}
@@ -89,22 +101,28 @@ public class ReuniaoController {
    	 * @return Sucesso/erro
    	 */
    	@DeleteMapping(value = "excluir/{id}")
-   	public ResponseEntity<String> excluirPorId(@PathVariable("id") int id){
+   	public ResponseEntity<Response<String>> excluirPorId(@PathVariable("id") int id){
          	
+   		Response<String> response = new Response<String>();
+   		
          	try {
  
                 	log.info("Controller: excluíndo reunião de ID: {}", id);
  
                 	reuniaoService.excluirPorId(id);
+                	
+                	response.setDados("Reunião de id: " + id + " excluído com sucesso");
  
-                	return ResponseEntity.ok("Reunião de id: " + id + " excluído com sucesso");
+                	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
                 	log.info("Controller: Inconsistência de dados: {}", e.getMessage());
-                	return ResponseEntity.badRequest().body(e.getMensagem());
+                	response.adicionarErro(e.getMensagem());
+                	return ResponseEntity.badRequest().body(response);
          	} catch (Exception e) {
                 	log.error("Controller: Ocorreu um erro na aplicação: {}", e.getMessage());
-                	return ResponseEntity.status(500).body(e.getMessage());
+                	response.adicionarErro("Ocorreu um erro na aplicação: {}", e.getMessage());
+                	return ResponseEntity.status(500).body(response);
          	}
          	
    	}
