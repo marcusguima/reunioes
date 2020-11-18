@@ -2,11 +2,13 @@ package com.reunioes.api.controllers;
  
 import java.util.List;
 import java.util.Optional;
- 
+import javax.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,11 +18,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
  
+import com.reunioes.api.dtos.ReuniaoDto;
 import com.reunioes.api.entities.Reuniao;
-import com.reunioes.api.response.Response;
 import com.reunioes.api.services.ReuniaoService;
 import com.reunioes.api.utils.ConsistenciaException;
- 
+import com.reunioes.api.utils.ConversaoUtils;
+import com.reunioes.api.response.Response; 
+
 @RestController
 @RequestMapping("/api/reuniao")
 @CrossOrigin(origins = "*")
@@ -38,9 +42,9 @@ public class ReuniaoController {
    	 * @return Lista de reuniões que o usuário possui
    	 */
    	@GetMapping(value = "/usuario/{usuarioId}")
-   	public ResponseEntity<Response<List<Reuniao>>> buscarPorUsuarioId(@PathVariable("usuarioId") int usuarioId) {
+   	public ResponseEntity<Response<List<ReuniaoDto>>> buscarPorUsuarioId(@PathVariable("usuarioId") int usuarioId) {
  
-   		Response<List<Reuniao>> response = new Response<List<Reuniao>>();
+   		Response<List<ReuniaoDto>> response = new Response<List<ReuniaoDto>>();
    		
          	try {
  
@@ -48,9 +52,10 @@ public class ReuniaoController {
  
                 	Optional<List<Reuniao>> listaReunioes = reuniaoService.buscarPorUsuarioId(usuarioId);
                 	
-                	response.setDados(listaReunioes.get());
- 
+                	response.setDados(ConversaoUtils.ConverterListaReuniao(listaReunioes.get()));
+                	 
                 	return ResponseEntity.ok(response);
+
  
          	} catch (ConsistenciaException e) {
                 	log.info("Controller: Inconsistência de dados: {}", e.getMessage());
@@ -60,6 +65,7 @@ public class ReuniaoController {
                 	log.error("Controller: Ocorreu um erro na aplicação: {}", e.getMessage());
                 	response.adicionarErro("Ocorreu um erro na aplicação: {}", e.getMessage());
                 	return ResponseEntity.status(500).body(response);
+
          	}
  
    	}
@@ -71,16 +77,28 @@ public class ReuniaoController {
    	 * @return Dados da reunião persistido
    	 */
    	@PostMapping
-   	public ResponseEntity<Response<Reuniao>> salvar(@RequestBody Reuniao reuniao) {
+   	public ResponseEntity<Response<ReuniaoDto>> salvar(@Valid @RequestBody ReuniaoDto reuniaoDto, BindingResult result) {
  
-   		Response<Reuniao> response = new Response<Reuniao>();
+   		Response<ReuniaoDto> response = new Response<ReuniaoDto>();
    		
          	try {
  
-                	log.info("Controller: salvando a reunião: {}", reuniao.toString());
+                	log.info("Controller: salvando a reunião: {}", reuniaoDto.toString());
                 	
-                	response.setDados(this.reuniaoService.salvar(reuniao));
-         	
+                	if (result.hasErrors()) {
+                		 
+                       	for (int i = 0; i < result.getErrorCount(); i++) {
+                       	   	response.adicionarErro(result.getAllErrors().get(i).getDefaultMessage());
+                       	}
+ 
+                       	log.info("Controller: Os campos obrigatórios não foram preenchidos");
+                       	return ResponseEntity.badRequest().body(response);
+ 
+                	}
+
+                	Reuniao reuniao = this.reuniaoService.salvar(ConversaoUtils.Converter(reuniaoDto));
+                	response.setDados(ConversaoUtils.Converter(reuniao));
+                	 
                 	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
@@ -110,9 +128,9 @@ public class ReuniaoController {
                 	log.info("Controller: excluíndo reunião de ID: {}", id);
  
                 	reuniaoService.excluirPorId(id);
-                	
-                	response.setDados("Reunião de id: " + id + " excluído com sucesso");
  
+                	response.setDados("Reunião de id: " + id + " excluído com sucesso");
+                	 
                 	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {

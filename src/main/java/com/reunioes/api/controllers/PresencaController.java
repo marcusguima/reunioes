@@ -2,11 +2,13 @@ package com.reunioes.api.controllers;
  
 import java.util.List;
 import java.util.Optional;
- 
+import javax.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,10 +18,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
  
+import com.reunioes.api.dtos.PresencaDto;
 import com.reunioes.api.entities.Presenca;
-import com.reunioes.api.response.Response;
 import com.reunioes.api.services.PresencaService;
 import com.reunioes.api.utils.ConsistenciaException;
+import com.reunioes.api.utils.ConversaoUtils;
+import com.reunioes.api.response.Response;
  
 @RestController
 @RequestMapping("/api/presenca")
@@ -38,18 +42,18 @@ public class PresencaController {
    	 * @return Lista de presenças que o usuário possui
    	 */
    	@GetMapping(value = "/usuario/{usuarioId}")
-   	public ResponseEntity<Response<List<Presenca>>> buscarPorUsuarioId(@PathVariable("usuarioId") int usuarioId) {
+   	public ResponseEntity<Response<List<PresencaDto>>> buscarPorUsuarioId(@PathVariable("usuarioId") int usuarioId) {
  
-   		Response<List<Presenca>> response = new Response<List<Presenca>>();
+   		Response<List<PresencaDto>> response = new Response<List<PresencaDto>>();
    		
          	try {
  
                 	log.info("Controller: buscando presenças do usuário de ID: {}", usuarioId);
  
-                	Optional<List<Presenca>> listaPresencas = presencaService.buscarPorUsuarioId(usuarioId);
-                	
-                	response.setDados(listaPresencas.get());
+                	Optional<List<Presenca>> listaPresencasUsuario = presencaService.buscarPorUsuarioId(usuarioId);
  
+                	response.setDados(ConversaoUtils.ConverterListaPresenca(listaPresencasUsuario.get()));
+                	 
                 	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
@@ -71,18 +75,18 @@ public class PresencaController {
    	 * @return Lista de presenças que a reunião possui
    	 */
    	@GetMapping(value = "/presenca/{presencaId}")
-   	public ResponseEntity<Response<List<Presenca>>> buscarPorReuniaoId(@PathVariable("reuniaoId") int reuniaoId) {
+   	public ResponseEntity<Response<List<PresencaDto>>> buscarPorReuniaoId(@PathVariable("reuniaoId") int reuniaoId) {
  
-   		Response<List<Presenca>> response = new Response<List<Presenca>>();
+   		Response<List<PresencaDto>> response = new Response<List<PresencaDto>>();
    		
          	try {
  
                 	log.info("Controller: buscando presenças da reunião de ID: {}", reuniaoId);
  
-                	Optional<List<Presenca>> listaPresencas = presencaService.buscarPorReuniaoId(reuniaoId);
-                	
-                	response.setDados(listaPresencas.get());
+                	Optional<List<Presenca>> listaPresencasReuniao = presencaService.buscarPorReuniaoId(reuniaoId);
  
+                	response.setDados(ConversaoUtils.ConverterListaPresenca(listaPresencasReuniao.get()));
+                	 
                 	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
@@ -104,17 +108,31 @@ public class PresencaController {
    	 * @return Dados da presença persistido
    	 */
    	@PostMapping
-   	public ResponseEntity<Response<Presenca>> salvar(@RequestBody Presenca presenca) {
- 
-   		Response<Presenca> response = new Response<Presenca>();
+   	public ResponseEntity<Response<PresencaDto>> salvar(@Valid @RequestBody PresencaDto presencaDto, BindingResult result) {
    		
+   		Response<PresencaDto> response = new Response<PresencaDto>();
+ 
          	try {
  
-                	log.info("Controller: salvando a presença: {}", presenca.toString());
-                	
-                	response.setDados(this.presencaService.salvar(presenca));
+                	log.info("Controller: salvando a presença: {}", presencaDto.toString());
          	
+                	if (result.hasErrors()) {
+                		 
+                       	for (int i = 0; i < result.getErrorCount(); i++) {
+                       	   	response.adicionarErro(result.getAllErrors().get(i).getDefaultMessage());
+                       	}
+ 
+                       	log.info("Controller: Os campos obrigatórios não foram preenchidos");
+                       	return ResponseEntity.badRequest().body(response);
+ 
+                	}
+
+                	Presenca presenca = this.presencaService.salvar(ConversaoUtils.Converter(presencaDto));
+                	response.setDados(ConversaoUtils.Converter(presenca));
+
+                	 
                 	return ResponseEntity.ok(response);
+
  
          	} catch (ConsistenciaException e) {
                 	log.info("Controller: Inconsistência de dados: {}", e.getMessage());
@@ -141,11 +159,11 @@ public class PresencaController {
          	try {
  
                 	log.info("Controller: excluíndo presença de ID: {}", id);
-                	
-                	response.setDados("Presença de id: " + id + " excluído com sucesso");
  
                 	presencaService.excluirPorId(id);
  
+                	response.setDados("Presença de id: " + id + " excluído com sucesso");
+                	 
                 	return ResponseEntity.ok(response);
  
          	} catch (ConsistenciaException e) {
@@ -161,4 +179,3 @@ public class PresencaController {
    	}
  
 }
-
