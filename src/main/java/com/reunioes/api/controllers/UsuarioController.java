@@ -99,10 +99,7 @@ public class UsuarioController {
 
                 	Usuario usuario = ConversaoUtils.Converter(usuarioDto);
                 	response.setDados(ConversaoUtils.Converter(this.usuarioService.salvar(usuario)));	
-                	
-//                	Usuario usuario = this.usuarioService.salvar(ConversaoUtils.Converter(usuarioDto));
-//                	response.setDados(ConversaoUtils.Converter(usuario));
-               
+            
                 	return ResponseEntity.ok(response);
 
  
