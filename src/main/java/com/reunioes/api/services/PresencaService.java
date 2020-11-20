@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +48,7 @@ public class PresencaService {
 
 	}
 
+	@Cacheable("cachePresencaPorUsuario")
 	public Optional<List<Presenca>> buscarPorUsuarioId(int usuarioId) throws ConsistenciaException {
 
 		log.info("Service: buscando as presenças do usuário de id: {}", usuarioId);
@@ -63,6 +66,7 @@ public class PresencaService {
 
 	}
 	
+	@Cacheable("cachePresencaPorUsuario")
 	public Optional<List<Presenca>> buscarPorReuniaoId(int reuniaoId) throws ConsistenciaException {
 
 		log.info("Service: buscando as presenças da reunião de id: {}", reuniaoId);
@@ -80,6 +84,7 @@ public class PresencaService {
 
 	}
 
+	@CachePut("cachePresencaPorUsuario")
 	public Presenca salvar(Presenca presenca) throws ConsistenciaException {
 
 		log.info("Service: salvando a presença: {}", presenca);
@@ -112,7 +117,7 @@ public class PresencaService {
 		}
 	}
 
-	
+	@CachePut("cachePresencaPorUsuario")
 	public void excluirPorId(int id) throws ConsistenciaException {
 
 		log.info("Service: excluíndo a presença de id: {}", id);
