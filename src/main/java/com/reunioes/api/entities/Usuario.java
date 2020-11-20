@@ -11,10 +11,13 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+import javax.persistence.JoinColumn;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
@@ -42,6 +45,12 @@ public class Usuario implements Serializable {
 
 	@Column(name = "ativo", nullable = false, length = 1)
 	private int ativo;
+	
+	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+   	@JoinTable(name = "usuario_regra",
+   	           joinColumns = { @JoinColumn(name = "usuario_id") },
+   	           inverseJoinColumns = { @JoinColumn(name = "regra_id") })
+   	private List<Regra> regras;
 	
 	@JsonManagedReference(value = "reuniao-usuario")
    	@OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -97,6 +106,14 @@ public class Usuario implements Serializable {
 
 	public void setAtivo(int ativo) {
 		this.ativo = ativo;
+	}
+	
+	public List<Regra> getRegras() {
+      	return regras;
+	}
+	
+	public void setRegras(List<Regra> regras) {
+      	this.regras = regras;
 	}
 	
 	public List<Reuniao> getReunioes() {

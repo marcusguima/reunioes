@@ -8,9 +8,11 @@ import java.util.List;
 import com.reunioes.api.dtos.UsuarioDto;
 import com.reunioes.api.dtos.ReuniaoDto;
 import com.reunioes.api.dtos.PresencaDto;
+import com.reunioes.api.dtos.RegraDto;
 import com.reunioes.api.entities.Usuario;
 import com.reunioes.api.entities.Reuniao;
 import com.reunioes.api.entities.Presenca;
+import com.reunioes.api.entities.Regra;
  
 public class ConversaoUtils {
  
@@ -71,8 +73,22 @@ public class ConversaoUtils {
  
          	usuario.setNome(usuarioDto.getNome());
          	usuario.setEmail(usuarioDto.getEmail());
-         	usuario.setSenha(usuarioDto.getSenha());
          	usuario.setAtivo(Integer.parseInt(usuarioDto.getAtivo()));
+         	
+         	if (usuarioDto.getRegras() != null && usuarioDto.getRegras().size() > 0) {
+         		 
+            	usuario.setRegras(new ArrayList<Regra>());
+
+            	for (RegraDto regraDto : usuarioDto.getRegras()) {
+
+                   	Regra regra = new Regra();
+                   	regra.setNome(regraDto.getNome());
+
+                   	usuario.getRegras().add(regra);
+
+            	}
+
+     	}
  
          	return usuario;
  
@@ -82,15 +98,55 @@ public class ConversaoUtils {
  
          	UsuarioDto usuarioDto = new UsuarioDto();
  
-         	usuarioDto.setId(String.valueOf(usuario.getId()));
+         	usuarioDto.setId(Integer.toString(usuario.getId()));
          	usuarioDto.setNome(usuario.getNome());
          	usuarioDto.setEmail(usuario.getEmail());
-         	usuarioDto.setSenha(usuario.getSenha());
-         	usuarioDto.setAtivo(String.valueOf(usuario.getAtivo()));
+         	usuarioDto.setAtivo(Integer.toString(usuario.getAtivo()));
          	
+         	if (usuario.getRegras() != null) {
+            	
+            	usuarioDto.setRegras(new ArrayList<RegraDto>());
+
+            	for (int i = 0; i < usuario.getRegras().size(); i++) {
+                   	
+                   	RegraDto regraDto = new RegraDto();
+                   	
+                   	regraDto.setNome(usuario.getRegras().get(i).getNome());
+                   	regraDto.setDescricao(usuario.getRegras().get(i).getDescricao());
+                   	regraDto.setAtivo(usuario.getRegras().get(i).getAtivo());
+                   	
+                   	usuarioDto.getRegras().add(regraDto);
+                   	
+            	}
+
+     	}
+
          	return usuarioDto;
  
    	}
+   	
+   	public static RegraDto Converter(Regra regra) {
+   	 
+     	RegraDto regraDto = new RegraDto();
+
+     	regraDto.setNome(regra.getNome());
+     	regraDto.setDescricao(regra.getDescricao());
+     	regraDto.setAtivo(regra.getAtivo());
+
+     	return regraDto;
+
+	}
+
+	public static List<RegraDto> Converter(List<Regra> regras) {
+
+     	List<RegraDto> regrasDto = new ArrayList<RegraDto>();
+
+     	for (Regra regra : regras)
+            	regrasDto.add(Converter(regra));
+
+     	return regrasDto;
+
+	}
    	
    	public static List<UsuarioDto> ConverterListaUsuario(List<Usuario> lista){
      	
@@ -122,7 +178,7 @@ public class ConversaoUtils {
      	Reuniao reuniao = new Reuniao();
      	reuniao.setId(Integer.parseInt(presencaDto.getReuniaoId()));
 
-     	presenca.setUsuario(usuario);
+     	presenca.setReuniao(reuniao);
 
      	return presenca;
 
